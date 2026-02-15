@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Haloi Threads | Minimalist Luxury</title>
+    <meta name="description" content="Premium minimalist streetwear.">
+    
+    <style>
+        /* ========================================
+        1. DESIGN TOKENS
+        ========================================
+        */
+        :root {
+            --bg-void: #030303;
+            --bg-card: #080808;
+            --text-primary: #e6e6e6;
+            --text-secondary: #666666;
+            
+            /* Muted Accent: Assamese Muga Silk (Desaturated) */
+            --accent-muted: #9e8f6b; 
+            
+            --gutter: clamp(20px, 5vw, 60px);
+            --font-stack: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            
+            /* Motion: Deliberate, Slow, Heavy */
+            --ease-luxury: cubic-bezier(0.19, 1, 0.22, 1); 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        /* BACKGROUND PULSE ANIMATION (5 Seconds) */
+        @keyframes darkPulse {
+            0% { background-color: #030303; }
+            50% { background-color: #141414; } /* Deep Charcoal Peak */
+            100% { background-color: #030303; }
+        }
+
+        html, body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            font-size: 16px;
+            overflow-x: hidden;
+            width: 100%;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            
+            /* Global Breathing Animation */
+            animation: darkPulse 5s ease-in-out infinite;
+        }
+
+        a { text-decoration: none; color: inherit; cursor: pointer; transition: color 0.5s var(--ease-luxury); }
+        a:hover { color: #fff; }
+        ul { list-style: none; }
+        button { border: none; background: none; cursor: pointer; color: inherit; font-family: inherit; outline: none; }
+
+        /* TYPOGRAPHY */
+        .text-display {
+            font-size: clamp(3rem, 10vw, 8rem);
+            line-height: 0.9;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .text-label {
+            font-size: 0.75rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .uppercase { text-transform: uppercase; }
+        .accent-text { color: var(--accent-muted); }
+
+        /* ========================================
+        2. THE VERTICAL THREAD (STRICTLY INVISIBLE TRACK)
+        ========================================
+        */
+        .central-thread {
+            position: fixed;
+            top: 0; left: 50%;
+            width: 1px;
+            height: 100vh;
+            background: none !important; /* Forces invisibility of static track */
+            transform: translateX(-50%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* The Pulse Animation - Visible Part */
+        .thread-pulse {
+            position: absolute;
+            top: -20%; left: 0;
+            width: 1px;
+            height: 200px;
+            background: linear-gradient(to bottom, transparent, var(--accent-muted), transparent);
+            opacity: 0.7;
+            /* 10s Cycle for the Drop */
+            animation: threadDrop 10s infinite cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        /* Hover Interaction State - ONLY affects the pulse */
+        .central-thread.active .thread-pulse {
+            opacity: 1;
+            height: 100vh; /* Beam extends on hover */
+            transition: height 0.5s var(--ease-luxury), opacity 0.3s ease;
+            background: linear-gradient(to bottom, transparent, var(--accent-muted), transparent);
+        }
+
+        @keyframes threadDrop {
+            0% { top: -30%; opacity: 0; }
+            10% { opacity: 1; } 
+            90% { opacity: 1; }
+            100% { top: 130%; opacity: 0; }
+        }
+
+        /* ========================================
+        3. SEQUENCED INTRO (UPDATED WITH BOX & LINES)
+        ========================================
+        */
+        #intro-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--bg-void);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.5s ease-in-out, visibility 1.5s; 
+            overflow: hidden; /* Contain the crossing lines */
+        }
+
+        /* NEW: Vertical Crossing Lines in Intro */
+        .intro-loom-lines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .loom-line {
+            position: absolute;
+            top: -100%; 
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent);
+            animation: loomPass 4s infinite linear;
+        }
+        
+        /* Staggered positions and speeds for smooth crossing */
+        .loom-line:nth-child(1) { left: 20%; animation-duration: 3s; animation-delay: 0s; }
+        .loom-line:nth-child(2) { left: 40%; animation-duration: 5s; animation-delay: 1s; }
+        .loom-line:nth-child(3) { left: 60%; animation-duration: 3.5s; animation-delay: 0.5s; }
+        .loom-line:nth-child(4) { left: 80%; animation-duration: 4.5s; animation-delay: 1.5s; }
+
+        @keyframes loomPass {
+            0% { top: -100%; opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .intro-content { position: relative; text-align: center; width: 100%; z-index: 2; }
+
+        .intro-welcome {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            font-weight: 400;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            opacity: 0;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            animation: welcomeSequence 3s var(--ease-luxury) forwards;
+        }
+
+        /* NEW: Brand Box Container */
+        .brand-box-wrapper {
+            position: relative;
+            display: inline-block;
+            padding: 20px 40px; /* Space between text and box */
+        }
+
+        .intro-brand {
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            opacity: 0;
+            letter-spacing: 0.05em;
+            transform: scale(0.95);
+            filter: blur(10px);
+            animation: brandReveal 3s 2.8s var(--ease-luxury) forwards;
+            white-space: nowrap;
+        }
+
+        /* NEW: Animated Box Borders */
+        .intro-border {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: all 1s var(--ease-luxury);
+        }
+
+        .border-top, .border-bottom { height: 1px; width: 0; left: 50%; transform: translateX(-50%); }
+        .border-left, .border-right { width: 1px; height: 0; top: 50%; transform: translateY(-50%); }
+        
+        .border-top { top: 0; animation: drawWidth 1.5s 3.2s var(--ease-luxury) forwards; }
+        .border-bottom { bottom: 0; animation: drawWidth 1.5s 3.2s var(--ease-luxury) forwards; }
+        .border-left { left: 0; animation: drawHeight 1.5s 3.8s var(--ease-luxury) forwards; }
+        .border-right { right: 0; animation: drawHeight 1.5s 3.8s var(--ease-luxury) forwards; }
+
+        @keyframes drawWidth { to { width: 100%; } }
+        @keyframes drawHeight { to { height: 100%; } }
+
+        @keyframes welcomeSequence {
+            0% { opacity: 0; letter-spacing: 1em; filter: blur(10px); }
+            20% { opacity: 1; letter-spacing: 0.5em; filter: blur(0); }
+            80% { opacity: 1; letter-spacing: 0.5em; filter: blur(0); }
+            100% { opacity: 0; letter-spacing: 0.2em; filter: blur(5px); transform: translate(-50%, -60%); }
+        }
+
+        @keyframes brandReveal {
+            0% { opacity: 0; transform: scale(0.98); filter: blur(15px); }
+            20% { opacity: 1; transform: scale(1); filter: blur(0); }
+            80% { opacity: 1; transform: scale(1); filter: blur(0); }
+            100% { opacity: 0; transform: scale(1.02); filter: blur(5px); }
+        }
+
+        /* ========================================
+        4. HERO & BUTTONS
+        ========================================
+        */
+        .btn-luxury {
+            position: relative;
+            padding: 18px 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+            font-size: 0.75rem;
+            color: #fff;
+            background: transparent;
+            overflow: hidden;
+            opacity: 0; 
+            z-index: 5;
+            transition: border-color 0.4s ease, color 0.4s ease;
+        }
+
+        .btn-luxury:hover {
+            border-color: var(--accent-muted);
+            color: var(--accent-muted);
+        }
+
+        /* ========================================
+        5. LAYOUT & SECTIONS
+        ========================================
+        */
+        nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 25px var(--gutter);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(3, 3, 3, 0.85); 
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+            transition: padding 0.5s ease;
+        }
+
+        .nav-logo { font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.9rem; color: #fff; }
+        .nav-links { display: flex; gap: 40px; }
+        .nav-item { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.6);  transition: color 0.3s; }
+        .nav-item:hover { color: #fff; }
+        
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            nav { padding: 20px; }
+        }
+
+        #hero {
+            height: 100vh;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 var(--gutter);
+            overflow: hidden;
+        }
+
+        #thread-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.3; pointer-events: none;
+        }
+
+        .hero-content {
+            z-index: 2; position: relative;
+        }
+
+        /* Hero Animation States */
+        .hero-element {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.5s var(--ease-luxury), transform 1.5s var(--ease-luxury);
+        }
+        .hero-element.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero-title {
+            background: linear-gradient(180deg, #ffffff 0%, #999 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-subtitle {
+            margin-bottom: 4rem;
+            max-width: 500px; margin-left: auto; margin-right: auto;
+            font-weight: 400; 
+            text-transform: uppercase;
+            letter-spacing: 0.2em; font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .section {
+            padding: 160px var(--gutter);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            position: relative; z-index: 2;
+        }
+
+        .identity-container {
+            max-width: 900px; margin: 0 auto; text-align: center;
+            background: transparent; padding: 40px;
+        }
+
+        .identity-headline {
+            font-size: clamp(1.8rem, 4vw, 3rem); margin-bottom: 30px; font-weight: 300;
+            letter-spacing: 0.05em; color: #fff; line-height: 1.2; text-transform: uppercase;
+        }
+
+        .identity-text {
+            font-size: clamp(0.9rem, 1.5vw, 1rem); line-height: 2; color: #777;
+            text-transform: uppercase; letter-spacing: 0.1em;
+        }
+
+        .works-header {
+            display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 70px;
+            padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); background: transparent;
+            position: relative; z-index: 2;
+        }
+
+        .works-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);
+            position: relative; z-index: 2;
+        }
+
+        .work-item {
+            cursor: pointer; position: relative; background: rgba(8,8,8,0.5); padding: 40px;
+            transition: background 0.5s; display: flex; flex-direction: column; align-items: center;
+        }
+        .work-item:hover { background: #080808; }
+
+        .work-item::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.9), transparent);
+            opacity: 0; transform: translateY(-100%); transition: opacity 0.3s; pointer-events: none;
+        }
+        .work-item:hover::after { opacity: 1; animation: scanline 2s infinite linear; }
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+
+        .work-image-box { width: 100%; aspect-ratio: 1; margin-bottom: 30px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .garment-art {
+            width: 50%; height: 60%; background: #1a1a1a;
+            box-shadow: 0 40px 80px -20px rgba(0,0,0,1); position: relative; transition: transform 0.6s var(--ease-luxury);
+        }
+        .work-item:hover .garment-art { transform: scale(1.05); }
+
+        .work-info { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 2; }
+        .work-title { font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.9rem; }
+        .work-price { color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 0.1em; }
+
+        .fade-up { opacity: 0; transform: translateY(40px); transition: all 1.2s var(--ease-luxury); }
+        .fade-up.active { opacity: 1; transform: translateY(0); }
+
+        #collections { border-bottom: none; }
+        .collection-hero {
+            width: 100%; height: 50vh; background: rgba(8,8,8,0.5); position: relative; 
+            overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 2;
+        }
+
+        /* ========================================
+        6. FOOTER
+        ========================================
+        */
+        footer {
+            padding: 80px var(--gutter);
+            border-top: 1px solid rgba(255,255,255,0.04);
+            position: relative; z-index: 2;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .footer-link {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-secondary);
+        }
+
+        .footer-info {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .copyright {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #444;
+        }
+
+        .founder {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 10px 20px;
+            display: inline-block;
+        }
+        
+        /* ========================================
+        CART SYSTEM STYLES (INJECTED)
+        ========================================
+        */
+        #cart-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            z-index: 200; opacity: 0; visibility: hidden;
+            transition: all 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        #cart-overlay.active { opacity: 1; visibility: visible; }
+
+        #cart-drawer {
+            position: fixed; top: 0; right: 0; width: 450px; max-width: 90%; height: 100%;
+            background: #0a0a0a; border-left: 1px solid rgba(255,255,255,0.08);
+            z-index: 201; transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+            display: flex; flex-direction: column;
+            box-shadow: -10px 0 50px rgba(0,0,0,0.8);
+        }
+        #cart-drawer.active { transform: translateX(0); }
+
+        .cart-header { padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .cart-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.2em; color: #9e8f6b; }
+        .close-cart { cursor: pointer; color: #fff; font-size: 1.5rem; padding: 5px; }
+
+        .cart-items-container { flex: 1; overflow-y: auto; padding: 0; }
+
+        .cart-item { display: flex; gap: 20px; padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .item-image { width: 80px; height: 100px; background: #151515; flex-shrink:0; }
+        .item-details { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .item-top { display: flex; justify-content: space-between; }
+        .item-name { font-size: 0.9rem; color: #fff; text-transform: uppercase; margin:0; }
+        .item-variant { font-size: 0.7rem; color: #666; display:block; margin-top:5px; }
+        .item-remove { font-size: 0.65rem; text-transform: uppercase; color: #555; cursor: pointer; letter-spacing: 0.1em; }
+
+        .item-bottom { display: flex; justify-content: space-between; align-items: center; margin-top:15px; }
+        .qty-wrapper { display: flex; border: 1px solid rgba(255,255,255,0.2); }
+        .qty-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; }
+        .qty-val { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; }
+        .item-price { color: #9e8f6b; font-size: 0.9rem; }
+
+        .cart-footer { padding: 30px; background: #0c0c0c; border-top: 1px solid rgba(255,255,255,0.1); }
+        .cart-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; color: #888; }
+        .cart-row.total { color: #fff; font-size: 1rem; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+        .btn-checkout { width: 100%; padding: 18px; background: #9e8f6b; border: none; color: #000; text-transform: uppercase; letter-spacing: 0.2em; font-weight: bold; margin-top: 20px; cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <!-- INTRO SEQUENCE -->
+    <div id="intro-overlay">
+        <!-- New: Crossing Lines in Intro -->
+        <div class="intro-loom-lines">
+            <div class="loom-line"></div>
+            <div class="loom-line"></div>
+            <div class="loom-line"></div>
+            <div class="loom-line"></div>
+        </div>
+
+        <div class="intro-content">
+            <div class="intro-welcome">Welcome</div>
+            
+            <!-- New: Brand Box Wrapper -->
+            <div class="brand-box-wrapper">
+                <div class="intro-brand">Haloi Threads</div>
+                <!-- Box Borders -->
+                <div class="intro-border border-top"></div>
+                <div class="intro-border border-bottom"></div>
+                <div class="intro-border border-left"></div>
+                <div class="intro-border border-right"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CENTRAL THREAD (SIGNATURE) -->
+    <div class="central-thread" id="central-thread">
+        <div class="thread-pulse"></div>
+    </div>
+
+    <!-- UNIVERSAL CART DRAWER HTML (INJECTED) -->
+    <div id="cart-overlay" onclick="HaloiCart.close()"></div>
+
+    <div id="cart-drawer">
+        <div class="cart-header">
+            <span class="cart-title">Your Selection</span>
+            <div class="close-cart" onclick="HaloiCart.close()">✕</div>
+        </div>
+
+        <div id="cart-items-wrapper" class="cart-items-container">
+            <!-- Items injected via JS -->
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-row">
+                <span>Subtotal</span>
+                <span id="cart-subtotal">₹0</span>
+            </div>
+            <div class="cart-row total">
+                <span>Total</span>
+                <span id="cart-total">₹0</span>
+            </div>
+            <button id="btn-checkout" class="btn-checkout" onclick="HaloiCart.checkout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- NAV -->
+    <nav>
+    
+        
+        <a href="index.html" class="nav-logo">Haloi Threads</a>
+        
+        
+        <div class="nav-links">
+            <a href="collection.html">View Collection</a>
+
+            <a href="shop.html" class="btn-luxury"> Shop Now</a>
+
+            <a href="about.html" class="nav-item">About</a>
+        </div>
+        <div class="header-right">
+          <a href="shop.html" class="nav-link">SHOP</a>
+          <a href="#"onclick="event.preventDefault(); HaloiCart.open()" class="cart">CART (<span id="nav-cart-count">0</span>)</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section id="hero">
+        <canvas id="thread-canvas"></canvas>
+
+        <div class="hero-content">
+            <h1 class="text-display hero-title hero-element">Silence Is<br>Structure</h1>
+            <p class="hero-subtitle hero-element">
+                The Luxury of Absence.
+            </p>
+            <a href="collection.html" class="btn-luxury hero-cta hero-element" id="hero-cta">
+  View Collection
+</a>
+
+        </div>
+    </section>
+
+    <!-- PHILOSOPHY -->
+    <section class="section">
+        <div class="identity-container">
+            <div class="text-label fade-up" style="margin-bottom: 25px;">Philosophy</div>
+            <h2 class="identity-headline fade-up" style="transition-delay: 0.1s;">
+                We don't follow trends. <br> <span class="accent-text" style="font-style: italic;">We build legacy.</span>
+            </h2>
+            <p class="identity-text fade-up" style="transition-delay: 0.2s;">
+                Crafted from the finest materials and defined by precise detailing. 
+                Haloi Threads represents a new era of streetwear—sophisticated, timeless, and purposely understated. 
+                Designed for those who speak without words.
+            </p>
+        </div>
+    </section>
+
+    <!-- PRODUCTS -->
+    <section id="products" class="section">
+        <div class="works-header fade-up">
+            <h3 class="uppercase" style="font-size: 1.5rem; letter-spacing: 0.1em; font-weight: 400;">Latest Artifacts</h3>
+            <a href="#" class="text-label" style="border-bottom: 1px solid #444;">View Full Collection</a>
+        </div>
+
+        <div class="works-grid">
+            <div class="work-item fade-up" style="transition-delay: 0.1s;">
+                 <div class="work-image-box"><div class="garment-art" style="background: #151515;"></div></div>
+                 <div class="work-info"><span class="work-title">Eclipse Hoodie</span><span class="work-price">₹4,800 INR</span></div>
+             </div>
+             <div class="work-item fade-up" style="transition-delay: 0.2s;">
+                 <div class="work-image-box"><div class="garment-art" style="background: #222222;"></div></div>
+                 <div class="work-info"><span class="work-title">Structure Tee</span><span class="work-price">₹2,400 INR</span></div>
+             </div>
+             <div class="work-item fade-up" style="transition-delay: 0.3s;">
+                 <div class="work-image-box"><div class="garment-art" style="background: #cecece;"></div></div>
+                 <div class="work-info"><span class="work-title" style="color: #fff;">Mono Trouser</span><span class="work-price">₹5,200 INR</span></div>
+             </div>
+         </div>
+     </section>
+
+     <!-- COLLECTIONS -->
+     <section id="collections" class="section" style="border-bottom: none;">
+         <div class="works-header fade-up">
+             <h3 class="uppercase" style="font-size: 1.5rem; letter-spacing: 0.1em; font-weight: 400;">Seasonal Archive</h3>
+         </div>
+         <div class="collection-hero fade-up">
+             <div style="z-index: 2;">
+                 <h2 class="text-display" style="font-size: 3rem; color: #333;">Season 01</h2>
+             </div>
+             <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(45deg, #050505, #0a0a0a); z-index: 1;"></div>
+         </div>
+     </section>
+
+     <!-- FOOTER -->
+     <footer>
+         <div class="founder">THANK YOU</div>
+         
+<div class="footer-links">
+   <a href="shipping.html">Shipping</a>
+   <a href="return.html">Returns</a>
+   <a href="privacy.html">Privacy Policy</a>
+   <a href="terms.html">Terms of Service</a>
+</div>
+   
+   
+   
+</div>
+
+
+         <div class="footer-info">
+             <p class="copyright">&copy; 2026 Haloi Threads. All Rights Reserved.</p>
+         </div>
+     </footer>
+
+     <script>
+         // 1. SEQUENCE LOGIC (STRICT TIMING)
+         window.addEventListener('load', () => {
+             const overlay = document.getElementById('intro-overlay');
+             const heroElements = document.querySelectorAll('.hero-element');
+
+             // Intro Animation Sequence:
+             // 0s-3s: Welcome
+             // 2.8s-5.8s: Brand Reveal
+             // 3.2s: Box Animation Starts
+             // 6.5s: Overlay Fade Out Starts
+             
+             setTimeout(() => {
+                 overlay.style.opacity = '0'; // Begin fade out
+                 
+                 setTimeout(() => {
+                     overlay.style.display = 'none'; 
+                     
+                     // Trigger Hero Sequence only AFTER overlay is gone
+                     setTimeout(() => { heroElements[0].classList.add('visible'); }, 200);
+                     setTimeout(() => { heroElements[1].classList.add('visible'); }, 600);
+                     setTimeout(() => { heroElements[2].classList.add('visible'); }, 1000);
+
+                 }, 1500); // Matches CSS transition time
+             }, 6500); // Total intro duration
+         });
+
+         // 2. SIGNATURE INTERACTION (THREAD PULSE ON HOVER)
+         const ctaBtn = document.getElementById('hero-cta');
+         const centralThread = document.getElementById('central-thread');
+
+         ctaBtn.addEventListener('mouseenter', () => {
+             centralThread.classList.add('active');
+         });
+
+         ctaBtn.addEventListener('mouseleave', () => {
+             centralThread.classList.remove('active');
+         });
+
+         // 3. SCROLL REVEAL
+         const observer = new IntersectionObserver((entries) => {
+             entries.forEach(entry => {
+                 if (entry.isIntersecting) {
+                     entry.target.classList.add('active');
+                     observer.unobserve(entry.target);
+                 }
+             });
+         }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+         document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+         // 4. BACKGROUND PHYSICS (SLOW DUST)
+         const canvas = document.getElementById('thread-canvas');
+         const ctx = canvas.getContext('2d');
+         let width, height, particles = [];
+
+         function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; initParticles(); }
+
+         class Particle {
+             constructor() {
+                 this.x = Math.random() * width; 
+                 this.y = Math.random() * height; 
+                 this.size = Math.random() * 1.5;
+                 // Extremely slow velocity for "Floating Dust" effect
+                 this.vx = (Math.random() - 0.5) * 0.05; 
+                 this.vy = (Math.random() - 0.5) * 0.05;
+                 this.life = Math.random() * 100;
+             }
+
+             update() {
+                 this.x += this.vx; 
+                 this.y += this.vy;
+                 
+                 // Gentle wrap
+                 if (this.x < 0) this.x = width; if (this.x > width) this.x = 0;
+                 if (this.y < 0) this.y = height; if (this.y > height) this.y = 0;
+                 
+                 this.life += 0.005; 
+                 // Very subtle opacity pulse
+                 this.opacity = (Math.sin(this.life) + 1) / 2 * 0.3;
+             }
+
+             draw() { 
+                 ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`; 
+                 ctx.beginPath(); 
+                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); 
+                 ctx.fill(); 
+             }
+         }
+
+         function initParticles() { 
+             particles = []; 
+             const count = Math.min((width * height) / 15000, 60); 
+             for (let i = 0; i < count; i++) particles.push(new Particle()); 
+         }
+
+         function animate() {
+             ctx.clearRect(0, 0, width, height); 
+             
+             particles.forEach((p) => {
+                 p.update(); p.draw();
+             });
+             requestAnimationFrame(animate);
+         }
+         window.addEventListener('resize', resize); resize(); animate();
+     </script>
+
+    <script src="cart.js"></script>
+</body>
+</html>

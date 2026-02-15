@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Collections | Haloi Threads</title>
+    <style>
+        /* ========================================
+        1. DESIGN SYSTEM (STRICT LOCK)
+        ========================================
+        */
+        :root {
+            --bg-void: #030303;
+            --bg-card: #080808;
+            --text-primary: #e6e6e6;
+            --text-secondary: #666666;
+            --accent-muga: #9e8f6b; 
+            --gutter: clamp(15px, 5vw, 60px);
+            --max-width: 1400px;
+            --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            --ease-luxury: cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @keyframes darkPulse {
+            0% { background-color: #030303; }
+            50% { background-color: #121212; }
+            100% { background-color: #030303; }
+        }
+
+        html, body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 16px;
+            overflow-x: hidden;
+            width: 100%;
+            -webkit-font-smoothing: antialiased;
+            animation: darkPulse 6s ease-in-out infinite;
+        }
+
+        /* Typography */
+        .text-display {
+            font-size: clamp(2rem, 8vw, 6rem);
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .text-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .text-body {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0.05em;
+        }
+
+        button, a {
+            font-family: inherit;
+            color: inherit;
+            text-decoration: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            outline: none;
+        }
+
+        /* SPA View Management */
+        .view-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.2s var(--ease-luxury), transform 1.2s var(--ease-luxury);
+            padding: 100px var(--gutter) 60px;
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========================================
+        2. COMPONENTS
+        ========================================
+        */
+        
+        /* UNIQUE BLURRY HEADER */
+        nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 20px 0;
+            z-index: 100;
+            /* Progressive Gradient Blur */
+            background: linear-gradient(to bottom, rgba(3,3,3,0.9) 20%, rgba(3,3,3,0.6) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        nav::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(158, 143, 107, 0.2), transparent);
+        }
+
+        .nav-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 var(--gutter);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo { font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.85rem; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-item { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-secondary); transition: color 0.5s; }
+        .nav-item:hover { color: #fff; }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            transition: color 0.4s, transform 0.4s;
+        }
+        .btn-back:hover { color: #fff; transform: translateX(-5px); }
+
+        .btn-luxury {
+            position: relative;
+            padding: 16px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.7rem;
+            color: #fff;
+            transition: all 0.6s var(--ease-luxury);
+            overflow: hidden;
+            background: transparent;
+        }
+        .btn-luxury:hover { border-color: var(--accent-muga); color: var(--accent-muga); }
+
+        /* ========================================
+        3. INTRO OVERLAY
+        ========================================
+        */
+        #intro-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--bg-void);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.8s ease-in-out, visibility 1.8s;
+            overflow: hidden;
+        }
+
+        .intro-loom-lines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .loom-line {
+            position: absolute;
+            top: -100%; 
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent);
+            animation: loomPass 4.5s infinite linear;
+        }
+        .loom-line:nth-child(1) { left: 20%; animation-duration: 3.5s; }
+        .loom-line:nth-child(2) { left: 40%; animation-duration: 5.5s; }
+        .loom-line:nth-child(3) { left: 60%; animation-duration: 4s; }
+        .loom-line:nth-child(4) { left: 80%; animation-duration: 5s; }
+
+        @keyframes loomPass {
+            0% { top: -100%; opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .intro-content { position: relative; text-align: center; width: 100%; z-index: 2; }
+        .intro-welcome {
+            font-size: clamp(0.9rem, 2vw, 1.5rem);
+            font-weight: 400;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            opacity: 0;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            animation: welcomeSequence 3.5s var(--ease-luxury) forwards;
+        }
+
+        .brand-box-wrapper { position: relative; display: inline-block; padding: 20px 40px; }
+        .intro-brand {
+            font-size: clamp(1.8rem, 8vw, 4.5rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            opacity: 0;
+            letter-spacing: 0.15em;
+            transform: scale(0.95);
+            filter: blur(10px);
+            animation: brandReveal 3.5s 3s var(--ease-luxury) forwards;
+            white-space: nowrap;
+        }
+
+        .intro-border { position: absolute; background-color: rgba(255, 255, 255, 0.3); }
+        .border-top, .border-bottom { height: 1px; width: 0; left: 50%; transform: translateX(-50%); }
+        .border-left, .border-right { width: 1px; height: 0; top: 50%; transform: translateY(-50%); }
+        .border-top { top: 0; animation: drawWidth 1.8s 3.5s var(--ease-luxury) forwards; }
+        .border-bottom { bottom: 0; animation: drawWidth 1.8s 3.5s var(--ease-luxury) forwards; }
+        .border-left { left: 0; animation: drawHeight 1.8s 4.2s var(--ease-luxury) forwards; }
+        .border-right { right: 0; animation: drawHeight 1.8s 4.2s var(--ease-luxury) forwards; }
+
+        @keyframes drawWidth { to { width: 100%; } }
+        @keyframes drawHeight { to { height: 100%; } }
+        @keyframes welcomeSequence {
+            0% { opacity: 0; letter-spacing: 1em; filter: blur(10px); }
+            20% { opacity: 1; letter-spacing: 0.5em; filter: blur(0); }
+            80% { opacity: 1; letter-spacing: 0.5em; filter: blur(0); }
+            100% { opacity: 0; letter-spacing: 0.2em; filter: blur(5px); transform: translate(-50%, -60%); }
+        }
+        @keyframes brandReveal {
+            0% { opacity: 0; transform: scale(0.98); filter: blur(15px); }
+            20% { opacity: 1; transform: scale(1); filter: blur(0); }
+            100% { opacity: 0; transform: scale(1.02); filter: blur(5px); }
+        }
+
+        /* ========================================
+        5. COLLECTIONS VIEW
+        ========================================
+        */
+        .collections-header { text-align: center; margin-bottom: 60px; max-width: 800px; margin-left: auto; margin-right: auto; }
+        .collections-statement { margin-top: 20px; color: var(--text-secondary); letter-spacing: 0.15em; font-weight: 400; font-size: 0.8rem; text-transform: uppercase; padding: 0 10px; }
+
+        .collections-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .collection-card {
+            background: var(--bg-card);
+            padding: 50px 30px;
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            transition: all 0.8s var(--ease-luxury);
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-card:hover { 
+            background: #0d0d0d; 
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .card-index {
+            font-size: 0.7rem;
+            color: var(--accent-muga);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            margin-top: 15px;
+        }
+
+        .card-content { display: flex; flex-direction: column; text-align: left; }
+        .col-card-name { font-size: 1.5rem; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; color: #fff; transition: transform 0.5s var(--ease-luxury); }
+        .col-card-meaning { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.15em; line-height: 1.4; }
+
+        .collection-card:hover .col-card-name { transform: translateX(10px); }
+
+        /* ========================================
+        6. COLLECTION DETAIL VIEW
+        ========================================
+        */
+        .detail-meta { margin-bottom: 60px; max-width: 900px; text-align: left; }
+        .detail-name { margin-bottom: 20px; color: #fff; }
+        .detail-philosophical { 
+            font-size: 1.1rem; 
+            color: var(--accent-muga); 
+            font-style: italic; 
+            line-height: 1.6; 
+            margin-bottom: 25px; 
+            letter-spacing: 0.02em;
+            font-weight: 300;
+        }
+        .detail-description { color: var(--text-secondary); line-height: 1.7; font-size: 0.9rem; max-width: 700px; opacity: 0.8; }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 1.2s var(--ease-luxury), transform 1.2s var(--ease-luxury);
+        }
+        .product-grid.reveal { opacity: 1; transform: translateY(0); }
+
+        .product-card { cursor: pointer; text-align: left; position: relative; transition: all 0.6s var(--ease-luxury); }
+        .product-visual {
+            width: 100%;
+            aspect-ratio: 0.85;
+            background: #0a0a0a;
+            margin-bottom: 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        
+        .product-inset-border {
+            position: absolute;
+            top: 15px; left: 15px; right: 15px; bottom: 15px;
+            border: 1px solid rgba(158, 143, 107, 0);
+            transition: all 0.7s var(--ease-luxury);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .product-garment { width: 45%; height: 60%; background: #151515; box-shadow: 0 30px 60px rgba(0,0,0,0.6); transition: transform 0.9s var(--ease-luxury); z-index: 1; }
+        
+        .product-card:hover .product-inset-border { border-color: rgba(158, 143, 107, 0.2); top: 8px; left: 8px; right: 8px; bottom: 8px; }
+        .product-card:hover .product-garment { transform: scale(1.08); }
+
+        .product-info { display: flex; flex-direction: column; gap: 5px; }
+        .prod-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: #fff; font-weight: 600; }
+        .prod-sub-meta { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .prod-sub { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-secondary); }
+
+        /* ========================================
+        7. PRODUCT VIEW PAGE (PVP)
+        ========================================
+        */
+        .pvp-layout { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 70px; align-items: center; text-align: left; }
+        .pvp-visual-container { background: #060606; aspect-ratio: 0.9; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.02); }
+        .pvp-visual-container .product-garment { width: 40%; height: 55%; }
+        
+        .pvp-details { display: flex; flex-direction: column; gap: 45px; }
+        .pvp-header-box { display: flex; flex-direction: column; gap: 15px; }
+        
+        .pvp-col-ref { color: var(--accent-muga); font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; }
+        .pvp-title { font-size: clamp(2rem, 5vw, 4rem); text-transform: uppercase; line-height: 1; color: #fff; }
+        .pvp-description { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8; margin-top: 10px; }
+        
+        .size-grid { display: flex; gap: 12px; }
+        .size-option { width: 50px; height: 50px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; transition: 0.4s; cursor: pointer; }
+        .size-option.selected { background: #fff; color: #000; border-color: #fff; }
+
+        @media (max-width: 1024px) {
+            .view-section { padding-top: 90px; padding-bottom: 50px; }
+            .collections-grid { grid-template-columns: 1fr; gap: 15px; }
+            .collection-card { align-items: center; text-align: center; flex-direction: column; gap: 15px; padding: 40px 20px; }
+            .card-index { transform: rotate(0deg); margin: 0; }
+            .card-content { text-align: center; }
+            .col-card-name { font-size: 1.4rem; }
+            
+            .detail-meta { text-align: center; margin-bottom: 50px; }
+            .product-grid { grid-template-columns: 1fr; gap: 50px; }
+            .product-card { text-align: center; }
+            .product-info { align-items: center; }
+            .prod-sub-meta { justify-content: center; gap: 15px; }
+
+            .pvp-layout { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+            .pvp-visual-container { height: 320px; width: 100%; margin-bottom: 20px; }
+            .pvp-header-box { align-items: center; }
+            .pvp-details { align-items: center; gap: 35px; }
+            .size-grid { justify-content: center; }
+            .pvp-description { max-width: 600px; font-size: 0.85rem; }
+            .text-display { font-size: 2.2rem; }
+            .pvp-title { font-size: 2rem; }
+        }
+
+        /* Signature Thread Pulse */
+        .central-thread { position: fixed; top: 0; left: 50%; width: 1px; height: 100vh; background: transparent; z-index: 1; pointer-events: none; }
+        .thread-pulse { position: absolute; top: -20%; left: 0; width: 1px; height: 250px; background: linear-gradient(to bottom, transparent, var(--accent-muga), transparent); animation: threadDrop 12s infinite cubic-bezier(0.65, 0, 0.35, 1); }
+        @keyframes threadDrop { 0% { top: -30%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 130%; opacity: 0; } }
+
+        /* Footer */
+        footer { max-width: var(--max-width); margin: 0 auto; padding: 60px var(--gutter); border-top: 1px solid rgba(255,255,255,0.04); display: flex; flex-direction: column; align-items: center; gap: 30px; text-align: center; }
+        .footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .footer-link { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-secondary); }
+        .founder { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #fff; border: 1px solid #333; padding: 10px 20px; }
+        
+        /* =========================================
+           8. INJECTED CART CSS (REQUIRED FOR DRAWER)
+           ========================================= */
+        #cart-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            z-index: 200; opacity: 0; visibility: hidden;
+            transition: all 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        #cart-overlay.active { opacity: 1; visibility: visible; }
+
+        #cart-drawer {
+            position: fixed; top: 0; right: 0; width: 450px; max-width: 90%; height: 100%;
+            background: #0a0a0a; border-left: 1px solid rgba(255,255,255,0.08);
+            z-index: 201; transform: translateX(100%);
+            transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+            display: flex; flex-direction: column;
+            box-shadow: -10px 0 50px rgba(0,0,0,0.8);
+        }
+        #cart-drawer.active { transform: translateX(0); }
+
+        .cart-header { padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .cart-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.2em; color: #9e8f6b; }
+        .close-cart { cursor: pointer; color: #fff; font-size: 1.5rem; padding: 5px; }
+
+        .cart-items-container { flex: 1; overflow-y: auto; padding: 0; }
+
+        .cart-item { display: flex; gap: 20px; padding: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .item-image { width: 80px; height: 100px; background: #151515; flex-shrink:0; }
+        .item-details { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .item-top { display: flex; justify-content: space-between; }
+        .item-name { font-size: 0.9rem; color: #fff; text-transform: uppercase; margin:0; }
+        .item-variant { font-size: 0.7rem; color: #666; display:block; margin-top:5px; }
+        .item-remove { font-size: 0.65rem; text-transform: uppercase; color: #555; cursor: pointer; letter-spacing: 0.1em; }
+
+        .item-bottom { display: flex; justify-content: space-between; align-items: center; margin-top:15px; }
+        .qty-wrapper { display: flex; border: 1px solid rgba(255,255,255,0.2); }
+        .qty-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; }
+        .qty-val { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; }
+        .item-price { color: #9e8f6b; font-size: 0.9rem; }
+
+        .cart-footer { padding: 30px; background: #0c0c0c; border-top: 1px solid rgba(255,255,255,0.1); }
+        .cart-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; color: #888; }
+        .cart-row.total { color: #fff; font-size: 1rem; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+        .btn-checkout { width: 100%; padding: 18px; background: #9e8f6b; border: none; color: #000; text-transform: uppercase; letter-spacing: 0.2em; font-weight: bold; margin-top: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- INTRO -->
+    <div id="intro-overlay">
+        <div class="intro-loom-lines">
+            <div class="loom-line"></div><div class="loom-line"></div><div class="loom-line"></div><div class="loom-line"></div>
+        </div>
+        <div class="intro-content">
+            <div class="intro-welcome">Welcome</div>
+            <div class="brand-box-wrapper">
+                <div class="intro-brand">Collection</div>
+                <div class="intro-border border-top"></div><div class="intro-border border-bottom"></div>
+                <div class="intro-border border-left"></div><div class="intro-border border-right"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- THREAD PULSE -->
+    <div class="central-thread"><div class="thread-pulse"></div></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="nav-logo" onclick="app.showView('collections')">Haloi Threads</a>
+            <div class="nav-links">
+                <a href="shop.html">Shop</a>
+
+            </div>
+            <div class="nav-item"
+            onclick="HaloiCart.open()"
+            style="cursor:pointer;">
+            CART (<span id="nav-cart-count">(0)</span>)</div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- COLLECTIONS VIEW -->
+        <section id="view-collections" class="view-section">
+            <div class="collections-header">
+                <h1 class="text-display">Collections</h1>
+                <p class="collections-statement">“Each collection represents a distinct state of mind.”</p>
+            </div>
+            <div class="collections-grid">
+                <div class="collection-card" onclick="app.openCollection('core')">
+                    <div class="card-index">01</div>
+                    <div class="card-content">
+                        <h2 class="col-card-name">Core / Uniform</h2>
+                        <span class="col-card-meaning">The Foundation of Silence</span>
+                    </div>
+                </div>
+                <div class="collection-card" onclick="app.openCollection('silence')">
+                    <div class="card-index">02</div>
+                    <div class="card-content">
+<h2 class="col-card-name">Silence Form</h2>
+                        <span class="col-card-meaning">Structure Without Noise</span>
+                    </div>
+                </div>
+                <div class="collection-card" onclick="app.openCollection('shadow')">
+                    <div class="card-index">03</div>
+                    <div class="card-content">
+                        <h2 class="col-card-name">Shadow State</h2>
+                        <span class="col-card-meaning">The Luxury of Absence</span>
+                    </div>
+                </div>
+                <div class="collection-card" onclick="app.openCollection('origin')">
+                    <div class="card-index">04</div>
+                    <div class="card-content">
+                        <h2 class="col-card-name">Origin Thread</h2>
+                        <span class="col-card-meaning">Woven from Heritage</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DETAIL VIEW -->
+        <section id="view-detail" class="view-section">
+            <button class="btn-back" onclick="app.showView('collections')">Back to Collections</button>
+            <div id="detail-render"></div>
+        </section>
+
+        <!-- PVP VIEW -->
+        <section id="view-pvp" class="view-section">
+            <button class="btn-back" id="btn-back-to-detail">Back to Collection</button>
+            <div id="pvp-render"></div>
+        </section>
+    </main>
+
+    <footer>
+         <div class="footer-links">
+         <a href="shipping.html" class="footer-link">Shipping</a>
+         <a href="return.html" class="footer-link">Returns</a>
+         <a href="privacy.html" class="footer-link">Privacy Policy</a>
+        <a href="terms.html" class="footer-link">Terms of Service</a>
+</div>
+
+        <p style="font-size: 0.65rem; color: #444; text-transform: uppercase; letter-spacing: 0.15em;">&copy; 2025 Haloi Threads. All Rights Reserved.</p>
+    </footer>
+
+    <!-- INJECTED CART HTML (REQUIRED FOR DRAWER) -->
+    <div id="cart-overlay" onclick="HaloiCart.close()"></div>
+
+    <div id="cart-drawer">
+        <div class="cart-header">
+            <span class="cart-title">Your Selection</span>
+            <div class="close-cart" onclick="HaloiCart.close()">✕</div>
+        </div>
+
+        <div id="cart-items-wrapper" class="cart-items-container">
+            <!-- Items injected via JS -->
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-row">
+                <span>Subtotal</span>
+                <span id="cart-subtotal">₹0</span>
+            </div>
+            <div class="cart-row total">
+                <span>Total</span>
+                <span id="cart-total">₹0</span>
+            </div>
+            <button id="btn-checkout" class="btn-checkout" onclick="HaloiCart.checkout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <script>
+        const DATA = {
+            collections: {
+                core: {
+                    name: "Core / Uniform",
+                    philosophical: "Identity is found in the subtraction of noise.",
+                    desc: "An archive of permanence. Designed to be the definitive base of a minimalist wardrobe. Heavyweight fabrics meeting structural integrity—the uniform for the quiet confident.",
+                    products: [
+                        { id: "c1", name: "Uniform Hoodie", sub: "450GSM Loopback", price: "4,800" },
+                        { id: "c2", name: "Core Box Tee", sub: "Heavy Jersey", price: "2,400" },
+                        { id: "c3", name: "Base Trouser", sub: "Technical Twill", price: "5,200" },
+                        { id: "c4", name: "Essential Shell", sub: "Matte Nylon", price: "7,500" }
+                    ]
+                },
+                silence: {
+                    name: "Silence Form",
+                    philosophical: "The body is the first architecture we inhabit.",
+                    desc: "Inspired by brutalist geometry. Silence Form explores the relationship between rigid lines and the human silhouette. Every seam is a boundary between the self and the void.",
+                    products: [
+                        { id: "s1", name: "Structure Jacket", sub: "Matte Outerwear", price: "9,500" },
+                        { id: "s2", name: "Form Shirt", sub: "Asymmetric Poplin", price: "4,200" },
+                        { id: "s3", name: "Linear Pant", sub: "Wide Cut Wool", price: "6,400" },
+                        { id: "s4", name: "Boundary Vest", sub: "Padded Technical", price: "5,800" }
+                    ]
+                },
+                shadow: {
+                    name: "Shadow State",
+                    philosophical: "Darkness is not an absence, but a presence.",
+                    desc: "An exploration of black in all its depths. Distorted silhouettes to create a presence that is felt rather than seen. Designed for the observers of the city.",
+                    products: [
+                        { id: "sh1", name: "Void Parka", sub: "Carbon Canvas", price: "14,500" },
+                        { id: "sh2", name: "Shadow Knit", sub: "Merino Blend", price: "6,800" },
+                        { id: "sh3", name: "Ghost Cargo", sub: "Matte Sateen", price: "8,200" },
+                        { id: "sh4", name: "Eclipse Layer", sub: "Sheer Tech Mesh", price: "3,500" }
+                    ]
+                },
+                origin: {
+                    name: "Origin Thread",
+                    philosophical: "Our future is woven from the ghosts of our past.",
+                    desc: "The bridge between history and the street. Traditional Assamese hand-spun textures meeting oversized silhouettes. Woven by hand, finished by the city soul.",
+                    products: [
+                        { id: "o1", name: "Heritage Noragi", sub: "Muga Silk Blend", price: "11,200" },
+                        { id: "o2", name: "Origin Tote", sub: "Heavy Canvas", price: "3,800" },
+                        { id: "o3", name: "Loom Overshirt", sub: "Hand-dyed Indigo", price: "5,600" },
+                        { id: "o4", name: "Brahma Trouser", sub: "Woven Slub Cotton", price: "4,900" }
+                    ]
+                }
+            }
+        };
+
+        const app = {
+            state: { currentColId: null, currentProdId: null, qty: 1 },
+            init() {
+                setTimeout(() => {
+                    const intro = document.getElementById('intro-overlay');
+                    intro.style.opacity = '0';
+                    setTimeout(() => { intro.style.visibility = 'hidden'; this.showView('collections'); }, 1800);
+                }, 4800);
+            },
+            showView(viewId) {
+                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                const target = document.getElementById(`view-${viewId}`);
+                if (target) { target.classList.add('active'); window.scrollTo(0, 0); }
+            },
+            openCollection(colId) {
+                this.state.currentColId = colId;
+                const col = DATA.collections[colId];
+                document.getElementById('detail-render').innerHTML = `
+                    <div class="detail-meta">
+                        <span class="text-label accent-muga" style="display:block;margin-bottom:15px;">Artifact Series</span>
+                        <h1 class="text-display detail-name">${col.name}</h1>
+                        <p class="detail-philosophical">${col.philosophical}</p>
+                        <p class="detail-description">${col.desc}</p>
+                    </div>
+                    <div class="product-grid" id="prod-grid-target">${col.products.map(p => `
+                        <div class="product-card" onclick="app.openProduct('${p.id}')">
+                            <div class="product-visual">
+                                <div class="product-inset-border"></div>
+                                <div class="product-garment" style="background:#151515"></div>
+                            </div>
+                            <div class="product-info">
+                                <h3 class="prod-title">${p.name}</h3>
+                                <div class="prod-sub-meta">
+                                    <span class="prod-sub">${p.sub}</span>
+                                    <span class="text-label" style="color:#fff;">₹${p.price}</span>
+                                </div>
+                            </div>
+                        </div>`).join('')}</div>`;
+                this.showView('detail');
+                setTimeout(() => { document.getElementById('prod-grid-target').classList.add('reveal'); }, 400); 
+            },
+            openProduct(prodId) {
+                this.state.currentProdId = prodId;
+                this.state.qty = 1;
+                const col = DATA.collections[this.state.currentColId];
+                const prod = col.products.find(p => p.id === prodId);
+                document.getElementById('btn-back-to-detail').onclick = () => this.showView('detail');
+                document.getElementById('pvp-render').innerHTML = `
+                    <div class="pvp-layout">
+                        <div class="pvp-visual-container"><div class="product-garment" style="background:#151515"></div></div>
+                        <div class="pvp-details">
+                            <div class="pvp-header-box">
+                                <span class="pvp-col-ref">${col.name} // Volume 01</span>
+                                <h1 class="pvp-title">${prod.name}</h1>
+                                <span class="text-display" style="font-size:1.5rem; color: #fff;">₹${prod.price}</span>
+                            </div>
+                            <p class="pvp-description">A signature structural piece from the ${col.name} collection. Designed with absolute intent, featuring custom ${prod.sub.toLowerCase()} construction. Every thread is a deliberate choice.</p>
+                            <div class="pvp-selection-group">
+                                <span class="text-label">Size Selection</span>
+                                <div class="size-grid">
+                                    <div class="size-option" onclick="this.parentNode.querySelectorAll('.size-option').forEach(s=>s.classList.remove('selected'));this.classList.add('selected')">S</div>
+                                    <div class="size-option selected" onclick="this.parentNode.querySelectorAll('.size-option').forEach(s=>s.classList.remove('selected'));this.classList.add('selected')">M</div>
+                                    <div class="size-option" onclick="this.parentNode.querySelectorAll('.size-option').forEach(s=>s.classList.remove('selected'));this.classList.add('selected')">L</div>
+                                    <div class="size-option" onclick="this.parentNode.querySelectorAll('.size-option').forEach(s=>s.classList.remove('selected'));this.classList.add('selected')">XL</div>
+                                </div>
+                            </div>
+                            <div style="width:100%;">
+                                <button class="btn-luxury" style="width:100%; margin-bottom: 12px;" onclick="alert('Proceeding to Checkout...')">Buy Now</button>
+<button class="btn-luxury"
+style="width:100%; border-color: transparent; opacity: 0.7;"
+onclick="HaloiCart.add({
+  id: '${prod.id}',
+  name: '${prod.name}',
+  price: ${prod.price.replace(',', '')}
+})">
+Add to Cart
+</button>
+
+                            </div>
+                        </div>
+                    </div>`;
+                this.showView('pvp');
+            },
+      };
+        window.onload = () => app.init();
+    </script>
+    <script src="cart.js"></script>
+</body>
+</html>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>About Us | Haloi Threads</title>
+    <style>
+        /* ========================================
+        1. DESIGN SYSTEM (STRICT LOCK)
+        ========================================
+        */
+        :root {
+            --bg-void: #030303;
+            --bg-card: #080808;
+            --text-primary: #e6e6e6;
+            --text-secondary: #666666;
+            --accent-muga: #9e8f6b; 
+            --gutter: clamp(15px, 5vw, 60px);
+            --max-width: 1400px;
+            --font-main: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            --ease-luxury: cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @keyframes darkPulse {
+            0% { background-color: #030303; }
+            50% { background-color: #121212; }
+            100% { background-color: #030303; }
+        }
+
+        html, body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 16px;
+            overflow-x: hidden;
+            width: 100%;
+            -webkit-font-smoothing: antialiased;
+            animation: darkPulse 6s ease-in-out infinite;
+        }
+
+        /* Typography */
+        .text-display {
+            font-size: clamp(2rem, 8vw, 6rem);
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .text-subhead {
+            font-size: clamp(1.2rem, 4vw, 2rem);
+            font-weight: 300;
+            line-height: 1.4;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+
+        .text-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        .text-body {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+        }
+
+        button, a {
+            font-family: inherit;
+            color: inherit;
+            text-decoration: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            outline: none;
+        }
+
+        /* View Management */
+        .view-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1.2s var(--ease-luxury), transform 1.2s var(--ease-luxury);
+            padding: 120px var(--gutter) 100px;
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            min-height: 100vh;
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ========================================
+        2. COMPONENTS
+        ========================================
+        */
+        
+        /* HEADER */
+        nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 20px 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(3,3,3,0.9) 20%, rgba(3,3,3,0.6) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        nav::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(158, 143, 107, 0.2), transparent);
+        }
+
+        .nav-container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 0 var(--gutter);
+            display: flex;
+            justify-content: center; /* Centered Logo since links are gone */
+            align-items: center;
+        }
+
+        .nav-logo { font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; font-size: 0.85rem; }
+
+        /* ========================================
+        3. INTRO OVERLAY
+        ========================================
+        */
+        #intro-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--bg-void);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.8s ease-in-out, visibility 1.8s;
+            overflow: hidden;
+        }
+
+        .intro-loom-lines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .loom-line {
+            position: absolute;
+            top: -100%; 
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent);
+            animation: loomPass 4.5s infinite linear;
+        }
+        .loom-line:nth-child(1) { left: 20%; animation-duration: 3.5s; }
+        .loom-line:nth-child(2) { left: 40%; animation-duration: 5.5s; }
+        .loom-line:nth-child(3) { left: 60%; animation-duration: 4s; }
+        .loom-line:nth-child(4) { left: 80%; animation-duration: 5s; }
+
+        @keyframes loomPass {
+            0% { top: -100%; opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .intro-content { position: relative; text-align: center; width: 100%; z-index: 2; }
+        .intro-welcome {
+            font-size: clamp(0.9rem, 2vw, 1.5rem);
+            font-weight: 400;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            opacity: 0;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            animation: welcomeSequence 3.5s var(--ease-luxury) forwards;
+        }
+
+        .brand-box-wrapper { position: relative; display: inline-block; padding: 20px 40px; }
+        .intro-brand {
+            font-size: clamp(1.8rem, 8vw, 4.5rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            opacity: 0;
+            letter-spacing: 0.15em;
+            transform: scale(0.95);
+            filter: blur(10px);
+            animation: brandReveal 3.5s 3s var(--ease-luxury) forwards;
+            white-space: nowrap;
+        }
+
+        .intro-border { position: absolute; background-color: rgba(255, 255, 255, 0.3); }
+        .border-top, .border-bottom { height: 1px; width: 0; left: 50%; transform: translateX(-50%); }
+        .border-left, .border-right { width: 1px; height: 0; top: 50%; transform: translateY(-50%); }
+        .border-top { top: 0; animation: drawWidth 1.8s 3.5s var(--ease-luxury) forwards; }
+        .border-bottom { bottom: 0; animation: drawWidth 1.8s 3.5s var(--ease-luxury) forwards; }
+        .border-left { left: 0; animation: drawHeight 1.8s 4.2s var(--ease-luxury) forwards; }
+        .border-right { right: 0; animation: drawHeight 1.8s 4.2s var(--ease-luxury) forwards; }
+
+        @keyframes drawWidth { to { width: 100%; } }
+        @keyframes drawHeight { to { height: 100%; } }
+        @keyframes welcomeSequence {
+            0% { opacity: 0; letter-spacing: 1em; filter: blur(10px); }
+            20% { opacity: 1; letter-spacing: 0.5em; filter: blur(0); }
+            80% { opacity: 1; letter-spacing: 0.5em; filter: blur(0); }
+            100% { opacity: 0; letter-spacing: 0.2em; filter: blur(5px); transform: translate(-50%, -60%); }
+        }
+        @keyframes brandReveal {
+            0% { opacity: 0; transform: scale(0.98); filter: blur(15px); }
+            20% { opacity: 1; transform: scale(1); filter: blur(0); }
+            100% { opacity: 0; transform: scale(1.02); filter: blur(5px); }
+        }
+
+        /* ========================================
+        4. ABOUT CONTENT LAYOUT
+        ========================================
+        */
+        .about-section {
+            margin-bottom: 120px;
+            text-align: center;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .about-intro-line {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            color: #fff;
+            letter-spacing: 0.05em;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .philosophy-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .approach-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-top: 40px;
+            padding: 0;
+        }
+
+        .approach-item {
+            font-size: 1rem;
+            color: var(--text-primary);
+            letter-spacing: 0.05em;
+            position: relative;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .approach-item:last-child { border-bottom: none; }
+
+        .boundaries-box {
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.01);
+            padding: 60px 40px;
+            margin-top: 60px;
+        }
+
+        .boundary-item {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .boundary-item::before {
+            content: '—';
+            margin-right: 10px;
+            color: var(--accent-muga);
+        }
+
+        .closing-statement {
+            font-size: clamp(1rem, 2vw, 1.4rem);
+            color: var(--text-primary);
+            opacity: 0.6;
+            letter-spacing: 0.1em;
+            margin-top: 150px;
+            margin-bottom: 50px;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 900px) {
+            .view-section { padding-top: 100px; }
+            .about-section { margin-bottom: 80px; }
+            .boundaries-box { padding: 40px 20px; }
+        }
+
+        /* Signature Thread Pulse */
+        .central-thread { position: fixed; top: 0; left: 50%; width: 1px; height: 100vh; background: transparent; z-index: 1; pointer-events: none; }
+        .thread-pulse { position: absolute; top: -20%; left: 0; width: 1px; height: 250px; background: linear-gradient(to bottom, transparent, var(--accent-muga), transparent); animation: threadDrop 12s infinite cubic-bezier(0.65, 0, 0.35, 1); }
+        @keyframes threadDrop { 0% { top: -30%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 130%; opacity: 0; } }
+
+        /* Footer */
+        footer { max-width: var(--max-width); margin: 0 auto; padding: 60px var(--gutter); border-top: 1px solid rgba(255,255,255,0.04); display: flex; flex-direction: column; align-items: center; gap: 30px; text-align: center; }
+        .footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .footer-link { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+    <!-- INTRO -->
+    <div id="intro-overlay">
+        <div class="intro-loom-lines">
+            <div class="loom-line"></div><div class="loom-line"></div><div class="loom-line"></div><div class="loom-line"></div>
+        </div>
+        <div class="intro-content">
+            <div class="intro-welcome">Welcome</div>
+            <div class="brand-box-wrapper">
+                <div class="intro-brand">About Us</div>
+                <div class="intro-border border-top"></div><div class="intro-border border-bottom"></div>
+                <div class="intro-border border-left"></div><div class="intro-border border-right"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- THREAD PULSE -->
+    <div class="central-thread"><div class="thread-pulse"></div></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-container">
+      <a href="index.html" class="nav-logo">Haloi Threads</a>.
+            <!-- Links & Cart Removed -->
+        </div>
+    </nav>
+
+    <main>
+        <section id="view-about" class="view-section">
+            
+            <!-- 1. Intro -->
+            <div class="about-section">
+                <h1 class="text-display" style="margin-bottom: 40px;">About Us</h1>
+                <p class="about-intro-line">Haloi Threads is a study in restraint, form, and identity.</p>
+            </div>
+
+            <!-- 2. Philosophy -->
+            <div class="about-section">
+                <span class="text-label accent-text">Philosophy</span>
+                <div class="philosophy-grid">
+                    <p class="text-body">
+                        We believe clarity is achieved through reduction. We strip away the ornamentation to reveal the essential structure of the garment.
+                    </p>
+                    <p class="text-body">
+                        Luxury is not defined by excess, but by the precision of the cut and the absolute discipline of the material.
+                    </p>
+                    <p class="text-body">
+                        We do not shout. We exist for those who understand that presence requires no explanation.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. Approach -->
+            <div class="about-section">
+                <span class="text-label accent-text">Design Approach</span>
+                <ul class="approach-list">
+                    <li class="approach-item">Form follows intent. Every seam is a decision.</li>
+                    <li class="approach-item">Material discipline. Fabrics that age with dignity.</li>
+                    <li class="approach-item">Permanence over seasonality.</li>
+                    <li class="approach-item">Fewer pieces, clearer intent.</li>
+                </ul>
+            </div>
+
+            <!-- 4. Boundaries -->
+            <div class="about-section">
+                <span class="text-label accent-text">Boundaries</span>
+                <div class="boundaries-box">
+                    <span class="boundary-item">No trend chasing</span>
+                    <span class="boundary-item">No excess branding</span>
+                    <span class="boundary-item">No loud messaging</span>
+                    <span class="boundary-item">No unnecessary releases</span>
+                </div>
+            </div>
+
+            <!-- 5. Closing -->
+            <div class="about-section">
+                <p class="closing-statement">Designed to be worn without explanation.</p>
+                <div style="width: 1px; height: 40px; background: #333; margin: 0 auto;"></div>
+            </div>
+
+        </section>
+    </main>
+        
+        <footer>
+        <div class="footer-links">
+            <a href="privacy.html" class="footer-link">Privacy Policy</a>
+            <a href="terms.html" class="footer-link">Terms of Service</a>
+            <a href="return.html" class="footer-link">Return Policy</a>
+            <a href="shipping.html" class="footer-link">Shipping Info</a>
+        </div>
+        
+        <p style="font-size: 0.65rem; color: #444; text-transform: uppercase; letter-spacing: 0.15em; margin-top: 20px;">&copy; 2025 Haloi Threads. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        const app = {
+            init() {
+                // Intro Animation Sequence
+                setTimeout(() => {
+                    const intro = document.getElementById('intro-overlay');
+                    intro.style.opacity = '0';
+                    setTimeout(() => { 
+                        intro.style.visibility = 'hidden'; 
+                        document.getElementById('view-about').classList.add('active');
+                    }, 1800);
+                }, 4800);
+            }
+        };
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
